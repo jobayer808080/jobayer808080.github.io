@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Withdraw</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family:Arial; padding:20px;">
+  <h2>Withdraw Request</h2>
+
+  <input id="amount" type="number" placeholder="Amount"><br><br>
+  <button onclick="withdraw()">Submit</button>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAO5CAwJSinFZTt9VnzzKssgxT_XJ4i0ds",
+      authDomain: "referraltaskapp.firebaseapp.com",
+      projectId: "referraltaskapp"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function withdraw() {
+      const user = auth.currentUser;
+      const amount = Number(document.getElementById("amount").value);
+
+      if (!user) return alert("Login required");
+
+      db.collection("withdraws").add({
+        uid: user.uid,
+        amount: amount,
+        status: "pending",
+        time: new Date()
+      }).then(() => alert("Withdraw request sent"));
+    }
+  </script>
+</body>
+  </html>
