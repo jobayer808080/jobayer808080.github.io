@@ -36,13 +36,18 @@
         document.getElementById("email").innerText = user.email;
 
         db.collection("users").doc(user.uid).get().then(doc => {
-          if (doc.exists) {
-            const d = doc.data();
-            document.getElementById("balance").innerText = d.balance;
-            document.getElementById("earning").innerText = d.totalEarning;
-            document.getElementById("withdraw").innerText = d.totalWithdraw;
-          }
-        });
+  if (doc.exists) {
+    const d = doc.data();
+
+    document.getElementById("balance").innerText = d.balance ?? 0;
+    document.getElementById("earning").innerText = d.totalEarning ?? 0;
+    document.getElementById("withdraw").innerText = d.totalWithdraw ?? 0;
+  } else {
+    document.getElementById("balance").innerText = 0;
+    document.getElementById("earning").innerText = 0;
+    document.getElementById("withdraw").innerText = 0;
+  }
+});
       }
     });
 
