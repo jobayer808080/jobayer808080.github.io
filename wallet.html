@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Wallet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family:Arial; padding:20px;">
+  <h2>Add Wallet</h2>
+
+  <select id="type">
+    <option value="bKash">bKash</option>
+    <option value="Nagad">Nagad</option>
+    <option value="Rocket">Rocket</option>
+  </select><br><br>
+
+  <input id="number" placeholder="Wallet Number"><br><br>
+
+  <button onclick="saveWallet()">Save</button>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function saveWallet() {
+      const user = auth.currentUser;
+      if (!user) return alert("Login required");
+
+      db.collection("users").doc(user.uid).update({
+        walletType: document.getElementById("type").value,
+        walletNumber: document.getElementById("number").value
+      }).then(() => alert("Wallet saved"));
+    }
+  </script>
+</body>
+    </html>
