@@ -6,99 +6,97 @@
 </head>
 <body style="font-family:Arial; padding:20px;">
 
-<h2>Login</h2>
-<input type="email" id="loginEmail" placeholder="Email"><br><br>
-<input type="password" id="loginPassword" placeholder="Password"><br><br>
-<button onclick="login()">Login</button>
+<h2>Signup</h2>
+<input id="signupEmail" placeholder="Email"><br><br>
+<input id="signupPass" type="password" placeholder="Password"><br><br>
+<input id="referralInput" placeholder="Referral Code (optional)"><br><br>
+<button onclick="signup()">Signup</button>
 
 <hr>
 
-<h2>Signup</h2>
-<input type="email" id="signupEmail" placeholder="Email"><br><br>
-<input type="password" id="signupPassword" placeholder="Password"><br><br>
-<input type="text" id="referralInput" placeholder="Referral Code (optional)"><br><br>
-<button onclick="signup()">Signup</button>
+<h2>Login</h2>
+<input id="loginEmail" placeholder="Email"><br><br>
+<input id="loginPass" type="password" placeholder="Password"><br><br>
+<button onclick="login()">Login</button>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAO5CAwJSinFZTt9VnzzKssgxT_XJ4i0ds",
-    authDomain: "referraltaskapp.firebaseapp.com",
-    projectId: "referraltaskapp"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAO5CAwJSinFZTt9VnzzKssgxT_XJ4i0ds",
+  authDomain: "referraltaskapp.firebaseapp.com",
+  projectId: "referraltaskapp"
+};
+firebase.initializeApp(firebaseConfig);
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  function signup() {
-    const email = document.getElementById("signupEmail").value;
-    const password = document.getElementById("signupPassword").value;
-    const referralInput = document.getElementById("referralInput").value.trim();
+// Generate referral code
+function generateReferralCode() {
+  return "JB" + Math.floor(1000 + Math.random() * 9000);
+}
 
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        const user = userCredential.user;
+function signup() {
+  const email = signupEmail.value;
+  const pass = signupPass.value;
+  const referralInput = referralInput.value.trim();
+  const myReferralCode = generateReferralCode();
 
-        const myReferralCode = "JB" + Math.floor(1000 + Math.random() * 9000);
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(res => {
+      const uid = res.user.uid;
 
-        db.collection("users").doc(user.uid).set({
-          email: email,
-          balance: 0,
-          totalEarning: 0,
-          totalWithdraw: 0,
-          referralCode: myReferralCode,
-          referredBy: referralInput || "",
-          referralCount: 0,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+      db.collection("users").doc(uid).set({
+        email: email,
+        balance: 0,
+        totalEarning: 0,
+        totalWithdraw: 0,
+        referralCode: myReferralCode,
+        referredBy: referralInput || "",
+        referralCount: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-        // Multi-Level Referral System (Level 1–10)
-        if (referralInput) {
-          const levels = [12,5,4,3,2,0.5,0.5,0.5,0.5,0.5]; // Level 1–10 earnings
+      // Multi-level referral
+      if (referralInput) {
+        const levels = [12,5,4,3,2,0.5,0.5,0.5,0.5,0.5];
 
-          function distribute(refCode, level=0) {
-            if(level >= levels.length || !refCode) return;
+        function distribute(refCode, level = 0) {
+          if (level >= levels.length || !refCode) return;
 
-            db.collection("users").where("referralCode","==",refCode).get()
-              .then(snapshot => {
-                snapshot.forEach(refDoc => {
-                  db.collection("users").doc(refDoc.id).update({
-                    balance: firebase.firestore.FieldValue.increment(levels[level]),
-                    totalEarning: firebase.firestore.FieldValue.increment(levels[level]),
-                    referralCount: firebase.firestore.FieldValue.increment(1)
-                  });
-
-                  // Next level
-                  const nextRefCode = refDoc.data().referredBy;
-                  distribute(nextRefCode, level+1);
+          db.collection("users")
+            .where("referralCode","==",refCode)
+            .get()
+            .then(snap => {
+              snap.forEach(doc => {
+                db.collection("users").doc(doc.id).update({
+                  balance: firebase.firestore.FieldValue.increment(levels[level]),
+                  totalEarning: firebase.firestore.FieldValue.increment(levels[level]),
+                  referralCount: firebase.firestore.FieldValue.increment(1)
                 });
-              });
-          }
 
-          distribute(referralInput);
+                distribute(doc.data().referredBy, level + 1);
+              });
+            });
         }
 
-        alert("Signup successful");
-        window.location.href = "dashboard.html";
-      })
-      .catch(error => alert(error.message));
-  }
+        distribute(referralInput);
+      }
 
-  function login() {
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
+      alert("Signup successful");
+      window.location.href = "dashboard.html";
+    })
+    .catch(err => alert(err.message));
+}
 
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        window.location.href = "dashboard.html";
-      })
-      .catch(error => alert(error.message));
-  }
+function login() {
+  auth.signInWithEmailAndPassword(loginEmail.value, loginPass.value)
+    .then(() => window.location.href = "dashboard.html")
+    .catch(err => alert(err.message));
+}
 </script>
-
 </body>
 </html>
