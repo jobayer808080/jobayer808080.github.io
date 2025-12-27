@@ -4,13 +4,16 @@
   <title>Referral Task App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
+
 <body style="font-family: Arial; padding:20px;">
   <h2>Create Account</h2>
 
-  <input id="email" placeholder="Email"><br><br>
-  <input type="text" id="referralInput" placeholder="Referral Code (optional)">
+  <input id="email" type="email" placeholder="Email"><br><br>
+
   <input id="password" type="password" placeholder="Password"><br><br>
-  <input id="ref" placeholder="Referral Code (optional)"><br><br>
+
+  <!-- Referral Code (Optional) -->
+  <input id="referralInput" type="text" placeholder="Referral Code (optional)"><br><br>
 
   <button onclick="signup()">Sign Up</button>
 
@@ -30,24 +33,55 @@
     const db = firebase.firestore();
 
     function signup() {
-      const email = document.getElementById("email").value;
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
-      const ref = document.getElementById("ref").value;
+      const referralInput = document.getElementById("referralInput").value.trim();
+
+      if (!email || !password) {
+        alert("Email & Password required");
+        return;
+      }
 
       auth.createUserWithEmailAndPassword(email, password)
-        .then((user) => {
-          db.collection("users").doc(user.user.uid).set({
+        .then(userCredential => {
+          const user = userCredential.user;
+
+          // নিজের referral code
+          const myReferralCode = "JB" + Math.floor(1000 + Math.random() * 9000);
+
+          // User data save
+          db.collection("users").doc(user.uid).set({
             email: email,
             balance: 0,
             totalEarning: 0,
             totalWithdraw: 0,
-            referredBy: ref,
-            createdAt: new Date()
+            referralCode: myReferralCode,
+            referredBy: referralInput || "",
+            referralCount: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
-          alert("Account created!");
+
+          // Referral income (Level-1 = 12৳)
+          if (referralInput) {
+            db.collection("users")
+              .where("referralCode", "==", referralInput)
+              .get()
+              .then(snapshot => {
+                snapshot.forEach(refDoc => {
+                  db.collection("users").doc(refDoc.id).update({
+                    balance: firebase.firestore.FieldValue.increment(12),
+                    totalEarning: firebase.firestore.FieldValue.increment(12),
+                    referralCount: firebase.firestore.FieldValue.increment(1)
+                  });
+                });
+              });
+          }
+
+          alert("Account created successfully!");
+          window.location.href = "dashboard.html";
         })
         .catch(err => alert(err.message));
     }
   </script>
 </body>
-  </html>
+</html>
