@@ -1,40 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Login</title>
+  <title>Login / Signup</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body style="font-family:Arial; padding:20px;">
-  <h2>Login</h2>
 
-  <input id="email" placeholder="Email"><br><br>
-  <input id="password" type="password" placeholder="Password"><br><br>
+<h2>Login</h2>
+<input type="email" id="loginEmail" placeholder="Email"><br><br>
+<input type="password" id="loginPassword" placeholder="Password"><br><br>
+<button onclick="login()">Login</button>
 
-  <button onclick="login()">Login</button>
+<hr>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<h2>Signup</h2>
+<input type="email" id="signupEmail" placeholder="Email"><br><br>
+<input type="password" id="signupPassword" placeholder="Password"><br><br>
+<input type="text" id="referralInput" placeholder="Referral Code (optional)"><br><br>
+<button onclick="signup()">Signup</button>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAO5CAwJSinFZTt9VnzzKssgxT_XJ4i0ds",
-      authDomain: "referraltaskapp.firebaseapp.com",
-      projectId: "referraltaskapp"
-    };
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAO5CAwJSinFZTt9VnzzKssgxT_XJ4i0ds",
+    authDomain: "referraltaskapp.firebaseapp.com",
+    projectId: "referraltaskapp"
+  };
 
-    function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          window.location.href = "dashboard.html";
-        })
-        .catch(err => alert(err.message));
-    }
-  </script>
+  function signup() {
+    const email = document.getElementById("signupEmail").value;
+    const password = document.getElementById("signupPassword").value;
+    const referralInput = document.getElementById("referralInput").value.trim();
+
+    auth.createUserWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        const user = userCredential.user;
+
+        const myReferralCode = "JB" + Math.floor(1000 + Math.random() * 9000);
+
+        db.collection("users").doc(user.uid).set({
+          email: email,
+          balance: 0,
+          totalEarning: 0,
+          totalWithdraw: 0,
+          referralCode: myReferralCode,
+          referredBy: referralInput || "",
+          referralCount: 0,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Level-1 referral income (12 taka)
+        if (referralInput) {
+          db.collection("users")
+            .where("referralCode", "==", referralInput)
+            .get()
+            .then(snapshot => {
+              snapshot.forEach(refDoc => {
+                db.collection("users").doc(refDoc.id).update({
+                  balance: firebase.firestore.FieldValue.increment(12),
+                  totalEarning: firebase.firestore.FieldValue.increment(12),
+                  referralCount: firebase.firestore.FieldValue.increment(1)
+                });
+              });
+            });
+        }
+
+        alert("Signup successful");
+        window.location.href = "dashboard.html";
+      })
+      .catch(error => alert(error.message));
+  }
+
+  function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        window.location.href = "dashboard.html";
+      })
+      .catch(error => alert(error.message));
+  }
+</script>
+
 </body>
 </html>
