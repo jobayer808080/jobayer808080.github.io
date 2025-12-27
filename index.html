@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Referral Task App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: Arial; padding:20px;">
+  <h2>Create Account</h2>
+
+  <input id="email" placeholder="Email"><br><br>
+  <input id="password" type="password" placeholder="Password"><br><br>
+  <input id="ref" placeholder="Referral Code (optional)"><br><br>
+
+  <button onclick="signup()">Sign Up</button>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "PASTE_API_KEY",
+      authDomain: "PASTE_AUTH_DOMAIN",
+      projectId: "PASTE_PROJECT_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const ref = document.getElementById("ref").value;
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((user) => {
+          db.collection("users").doc(user.user.uid).set({
+            email: email,
+            balance: 0,
+            totalEarning: 0,
+            totalWithdraw: 0,
+            referredBy: ref,
+            createdAt: new Date()
+          });
+          alert("Account created!");
+        })
+        .catch(err => alert(err.message));
+    }
+  </script>
+</body>
+  </html>
