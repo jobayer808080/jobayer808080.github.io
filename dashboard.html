@@ -1,61 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dashboard</title>
+  <title>User Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body style="font-family:Arial; padding:20px;">
-  <h2>User Dashboard</h2>
 
-  <p><b>Email:</b> <span id="email"></span></p>
-  <p><b>Balance:</b> ৳<span id="balance"></span></p>
-  <p><b>Total Earning:</b> ৳<span id="earning"></span></p>
-  <p><b>Total Withdraw:</b> ৳<span id="withdraw"></span></p>
+<h2>User Dashboard</h2>
 
-  <button onclick="logout()">Logout</button>
+<p><b>Email:</b> <span id="email"></span></p>
+<p><b>Balance:</b> ৳<span id="balance">0</span></p>
+<p><b>Total Earning:</b> ৳<span id="earning">0</span></p>
+<p><b>Total Withdraw:</b> ৳<span id="withdraw">0</span></p>
+<p><b>Your Referral Code:</b> <span id="refCode"></span></p>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<button onclick="logout()">Logout</button>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAO5CAwJSinFZTt9VnzzKssgxT_XJ4i0ds",
-      authDomain: "referraltaskapp.firebaseapp.com",
-      projectId: "referraltaskapp"
-    };
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAO5CAwJSinFZTt9VnzzKssgxT_XJ4i0ds",
+    authDomain: "referraltaskapp.firebaseapp.com",
+    projectId: "referraltaskapp"
+  };
 
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        document.getElementById("email").innerText = user.email;
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-        db.collection("users").doc(user.uid).get().then(doc => {
-  if (doc.exists) {
-    const d = doc.data();
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("email").innerText = user.email;
 
-    document.getElementById("balance").innerText = d.balance ?? 0;
-    document.getElementById("earning").innerText = d.totalEarning ?? 0;
-    document.getElementById("withdraw").innerText = d.totalWithdraw ?? 0;
-  } else {
-    document.getElementById("balance").innerText = 0;
-    document.getElementById("earning").innerText = 0;
-    document.getElementById("withdraw").innerText = 0;
-  }
-});
-      }
-    });
-
-    function logout() {
-      auth.signOut().then(() => {
-        window.location.href = "login.html";
+      db.collection("users").doc(user.uid).get().then(doc => {
+        if (doc.exists) {
+          const d = doc.data();
+          document.getElementById("balance").innerText = d.balance ?? 0;
+          document.getElementById("earning").innerText = d.totalEarning ?? 0;
+          document.getElementById("withdraw").innerText = d.totalWithdraw ?? 0;
+          document.getElementById("refCode").innerText = d.referralCode ?? "";
+        }
       });
     }
-  </script>
+  });
+
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    });
+  }
+</script>
+
 </body>
 </html>
