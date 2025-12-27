@@ -56,20 +56,30 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Level-1 referral income (12 taka)
+        // Multi-Level Referral System (Level 1–10)
         if (referralInput) {
-          db.collection("users")
-            .where("referralCode", "==", referralInput)
-            .get()
-            .then(snapshot => {
-              snapshot.forEach(refDoc => {
-                db.collection("users").doc(refDoc.id).update({
-                  balance: firebase.firestore.FieldValue.increment(12),
-                  totalEarning: firebase.firestore.FieldValue.increment(12),
-                  referralCount: firebase.firestore.FieldValue.increment(1)
+          const levels = [12,5,4,3,2,0.5,0.5,0.5,0.5,0.5]; // Level 1–10 earnings
+
+          function distribute(refCode, level=0) {
+            if(level >= levels.length || !refCode) return;
+
+            db.collection("users").where("referralCode","==",refCode).get()
+              .then(snapshot => {
+                snapshot.forEach(refDoc => {
+                  db.collection("users").doc(refDoc.id).update({
+                    balance: firebase.firestore.FieldValue.increment(levels[level]),
+                    totalEarning: firebase.firestore.FieldValue.increment(levels[level]),
+                    referralCount: firebase.firestore.FieldValue.increment(1)
+                  });
+
+                  // Next level
+                  const nextRefCode = refDoc.data().referredBy;
+                  distribute(nextRefCode, level+1);
                 });
               });
-            });
+          }
+
+          distribute(referralInput);
         }
 
         alert("Signup successful");
